@@ -1,6 +1,6 @@
 \documentclass[aspectratio=169]{beamer}
 \usetheme{metropolis}
-\title{Automate the boring stuff with \texttt{pytorch-lightning}}
+\title{Automate Engineering Code with Pytorch Lightning}
 \date{13 May, 2020}
 \author{Jacob Nilsson}
 \institute{Luleå University of Technology}
@@ -24,27 +24,56 @@
 
 % Minted options
 \setminted[python]{
-	tabsize=4, 
+	tabsize=4,
 	python3=true}
+
 
 \begin{document}
 	\maketitle
-	\section{What's the boring stuff?}
+	\begin{frame}{Disclaimer}
+		Even though this presentation will sound like a sales pitch for pytorch lightning, I am \alert{not associated} with the pytorch lightning project and I have not contributed to it.
+
+		It is a tool that I find useful and think you will also find useful.
+	\end{frame}
+	\section{Engineering Code vs. Research Code}
+	\begin{frame}{What is engineering code?}
+		\alert<2>{
+			\textbf{Engineering code}:
+			\begin{itemize}
+				\item Training/validation/test loops.
+				\item Debug functionality.
+				\item Early stopping.
+				\item GPU and distributed computing.
+				\item And other \alert<4>{boilerplate}, \alert<4>{boring} stuff.
+			\end{itemize}
+		}
+
+		\vfill
+		\alert<3>{
+		\textbf{Research code}:
+		\begin{itemize}
+			\item Model.
+			\item Training/validation/test step.
+			\item And other \alert<4>{interesting} stuff.
+		\end{itemize}
+	}
+	\end{frame}
 	\begin{frame}{An example of boilerplate code}
 		\livecode
+
 	\end{frame}
 
 	\begin{frame}{An example of boilerplate code}
 		\begin{minipage}[b]{0.45\textwidth}
 			With boring stuff:\\[1em]
 
-			\inputminted[firstline=4, lastline=7]{python}{
+			\inputminted[firstline=4, lastline=7, python3=true]{python}{
 			../boilerplate-example-finished.py}
 		\end{minipage}\hfill
 		\begin{minipage}[b]{0.45\textwidth}
 			Without boring stuff:\\[1em]
 
-			\inputminted[firstline=11, lastline=14]{python}{
+			\inputminted[firstline=11, lastline=14, python3=true]{python}{
 			../boilerplate-example-finished.py}
 		\end{minipage}
 	\end{frame}
@@ -55,7 +84,7 @@
 			Messier code\\
 			More error prone:\\[1em]
 
-			\inputminted[firstline=4, lastline=7]{python}{
+			\inputminted[firstline=4, lastline=7, python3=true]{python}{
 			../boilerplate-example-finished.py}
 		\end{minipage}\hfill
 		\begin{minipage}[b]{0.45\textwidth}
@@ -63,7 +92,7 @@
 			Cleaner code\\
 			Less error prone:\\[1em]
 
-			\inputminted[firstline=11, lastline=14]{python}{
+			\inputminted[firstline=11, lastline=14, python3=true]{python}{
 			../boilerplate-example-finished.py}
 		\end{minipage}
 	\end{frame}
@@ -139,35 +168,39 @@
 				""" Returns a validation dataloader """
 		\end{minted}
 		\vfill
-		For testing, replace \texttt{validation} with \texttt{test}
+	\end{frame}
+
+	\begin{frame}[fragile]{Testing}
+		Testing is similar to validation:
+		\begin{minted}[autogobble]{python}
+			def test_step(self, batch, batch_idx):
+				""" Calculate test for batch """
+
+			def test_epoch_end(self, outputs):
+				""" Average results over all batches """
+		\end{minted}
 	\end{frame}
 
 	\begin{frame}[fragile]{Progress Bar and Logging}
-		All \texttt{\_step} and \texttt{\_epoch\_end} methods \emph{must} return a dictionary where you can choose what is logged and shown in the progress bar.
-		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
+		All \texttt{\_step} and \texttt{\_epoch\_end} methods \emph{must} return a dictionary where you choose what is logged and shown in the progress bar.
+		\begin{minted}[autogobble]{python}
 			def training_step(self, batch, batch_idx):
-				""" 
-				
-				"""
-				return {'loss': loss} # Mandatory for training_step
+				return {'loss', {None}}
 
 			def validation_epoch_end(self, batch, batch_idx):
-				""" 
-				
-				"""
-				return {'progress_bar': pb_dict, # dict of progress bar
-					'log': {'val_loss', val_loss} # dict of variables to log
+				return {'progress_bar': {null},
+					'log': {None}}
 		\end{minted}
 	\end{frame}
 
 	\begin{frame}[fragile]{Customizable loggers}
-		Logging is done automatically done with Tensorboard by default, but can be swapped to any other logger compatible with Pytorch Lightning, see \url{https://pytorch-lightning.readthedocs.io/en/latest/loggers.html}. For example TestTube:
-
+		Tensorboard is used as the default logger, and can be swapped to any other logger compatible with Pytorch Lightning, see \url{https://pytorch-lightning.readthedocs.io/en/latest/loggers.html}. For example TestTube:
+		
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
 			def main():
-				from pytorch_lightning.loggers import TestTubeLogger
-				ttlogger = TestTubeLogger('tb_logs', name='my_model')
-				trainer = pl.Trainer(logger=ttlogger)
+			   from pytorch_lightning.loggers import TestTubeLogger
+			   ttlogger = TestTubeLogger('tb_logs', name='my_model')
+			   trainer = pl.Trainer(logger=ttlogger)
 		\end{minted}
 	\end{frame}
 
@@ -180,13 +213,13 @@
 		\vfill
 		Logging is easily added, and logger behaviour can be changed.
 	\end{frame}
-	
+
 	\section{Debugging}
-	
+
 	\begin{frame}[fragile]{Validation sanity checks}
 		Pytorch Lightning runs a few validation steps (5 by default) before training to find errors before costly training begins. Can be customized:
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
-			trainer = Trainer(num_sanity_val_steps=5)
+					   trainer = Trainer(num_sanity_val_steps=5)
 		\end{minted}
 	\end{frame}
 
@@ -194,16 +227,17 @@
 		To quickly check that the model runs through all steps correctly, you can set the \texttt{fast\_dev\_run} flag:
 
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
-			trainer = Trainer(fast_dev_run=True)
+					   trainer = Trainer(fast_dev_run=True)
 		\end{minted}
 	\end{frame}
+
 
 	\begin{frame}[fragile]{Overfitting checks}
 		You can tell the trainer to overfit on a small subset of your data to check that the loss goes to 0.
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
-			trainer = pl.Trainer(
-				overfit_pct=0.01, # Overfits on 1% of the data
-				training_percent_check=0.01, # Overfits on 1% of the training data
+		   trainer = pl.Trainer(
+				   overfit_pct=0.01, # Overfits on 1% of the data
+				   training_percent_check=0.01, # Overfits on 1% of the training data
 		\end{minted}
 	\end{frame}
 
@@ -212,16 +246,17 @@
 	\begin{frame}[fragile]{Callbacks}
 		Non-essential functionality is put in callbacks, some important ones are already defined such as early stopping and model checkpointing
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
-			from pytorch_lightning.callbacks import EarlyStopping, \
-													ModelCheckpoint
+		   from pytorch_lightning.callbacks import EarlyStopping, \
 
-			early_stopping = EarlyStopping('val_loss')
-			checkpoint_callback = ModelCheckpoint(filepath='my/path/')
+			ModelCheckpoint
 
-			trainer = Trainer(early_stop_callback=early_stopping,
-							  checkpoint_callback=checkpoint_callback)
+		   early_stopping = EarlyStopping('val_loss')
+		   checkpoint_callback = ModelCheckpoint(filepath='my/path/')
+
+		   trainer = Trainer(early_stop_callback=early_stopping,
+											 checkpoint_callback=checkpoint_callback)
 		\end{minted}
-		
+
 	\end{frame}
 
 	\begin{frame}{Callbacks}
@@ -238,18 +273,29 @@
 		Used if you have something you need to do at the start of each epoch:
 
 		\begin{minted}[autogobble, fontsize=\footnotesize]{python}
-			class Net(pl.LightningModule):
-				def on_epoch_start():
-					print('new epoch started')
-					self.a *= 1.1
+		   class Net(pl.LightningModule):
+				   def on_epoch_start():
+						   print('new epoch started')
+						   self.a *= 1.1
 		\end{minted}
 	\end{frame}
 
 	\begin{frame}{More Hooks}
 		Consult the documentation for more hooks, some are very specific and they are open to suggestions for new hooks. 
-		
+
 		\url{https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.hooks.html}
-		
+
+	\end{frame}
+
+	\begin{frame}{What else?}
+		Some other interesting things in no particular order:
+		\begin{itemize}
+			\item Use multiple optimizers and learning rate schedulers (GANs for instance)
+			\item Profiling performance (Nice to find bottlenecks)
+			\item GPU training is easier to do (Set one flag)
+			\item Distributed training (Haven't tried this myself)
+			\item Other things I have no use for but you might!
+		\end{itemize}
 	\end{frame}
 
 	\section{Summary}
@@ -267,8 +313,7 @@
 	\end{frame}
 
 	\begin{frame}[standout]
-		Questions
+		Questions and Discussion
 	\end{frame}
 
 \end{document}
-
